@@ -1,4 +1,4 @@
-FROM python:3.10-alpine
+FROM --platform=amd64 python:3.10-alpine
 
 ENV HOSTNAME=0.0.0.0
 ENV PORT=12345
