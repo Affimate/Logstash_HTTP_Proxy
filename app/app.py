@@ -11,6 +11,7 @@ async def main(bundle, bytes):
 async def fireLost(bundle, bytes):
     s = socket.socket()
     s.connect(bundle)
+    print(bytes)
     s.send(bytes)
     s.close()
 
@@ -35,9 +36,10 @@ class HandleRequests(BaseHTTPRequestHandler):
         content_len = int(self.headers.get_all('content-length')[0])
         post_body = self.rfile.read(content_len)
         now = datetime.now()
-        a = "received post request:<br>{}".format(post_body)
+        body = post_body.decode().replace("\n","").replace("\t","")
+        a = "received post request:<br>{}".format(body)
         print("["+now.strftime("%m/%d/%Y, %H:%M:%S")+"]: " + a)
-        self.delegate_bytes(post_body)
+        self.delegate_bytes(body.encode())
         self.wfile.write(b'')
 
     def do_PUT(self):
@@ -58,6 +60,8 @@ if __name__ == "__main__":
     if type(hostName_target) == type(None) or type(serverPort_target) == type(None):
         print("Undefined Target")
         exit(-1)
+    print("HOSTNAME_TARGET:",hostName_target)
+    print("PORT_TARGET:",serverPort_target)
     serverPort_target = int(serverPort_target)
     webServer = HTTPServer((hostName, serverPort), HandleRequests)
     webServer.RequestHandlerClass.set_proxy_target(webServer.RequestHandlerClass, hostName_target, serverPort_target)
