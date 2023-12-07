@@ -47,7 +47,10 @@ class HandleRequests(BaseHTTPRequestHandler):
         asyncio.run(main(self.bundle_target, bytes))
 
 if __name__ == "__main__":
-    load_dotenv()
+    try:
+        load_dotenv()
+    except Exception:
+        pass
     hostName = os.getenv('HOSTNAME')
     serverPort = int(os.getenv('PORT'))
     hostName_target = os.getenv('HOSTNAME_TARGET')
