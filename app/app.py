@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import os
 import socket
 import asyncio
+import json
 
 async def main(bundle, bytes):
     asyncio.ensure_future(fireLost(bundle, bytes))
@@ -37,16 +38,26 @@ class HandleRequests(BaseHTTPRequestHandler):
         post_body = self.rfile.read(content_len)
         now = datetime.now()
         body = post_body.decode().replace("\n","").replace("\t","")
-        a = "received post request:<br>{}".format(body)
+        data = json.loads(body)
+        print(data)
+        target = self.get_target(data)
+        content = json.dumps(data["content"])
+        a = "received post request to {}:<br>{}".format(target, content)
         print("["+now.strftime("%m/%d/%Y, %H:%M:%S")+"]: " + a)
-        self.delegate_bytes(body.encode())
+        self.delegate_bytes(target, content.encode())
         self.wfile.write(b'')
 
     def do_PUT(self):
         self.do_POST()
 
-    def delegate_bytes(self, bytes):
-        asyncio.run(main(self.bundle_target, bytes))
+    def get_target(self, data):
+        if "target" in data and data["target"] != "" and data["target"].isnumeric():
+            return int(data["target"])
+        return 0
+
+    def delegate_bytes(self, target, bytes):
+        resolve_port = target if target != 0 else self.bundle_target[1]
+        asyncio.run(main((self.bundle_target[0], resolve_port), bytes))
 
 if __name__ == "__main__":
     try:
