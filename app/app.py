@@ -32,7 +32,7 @@ async def main(trace_id, bundle, bytes):
     asyncio.ensure_future(fireLost(trace_id, bundle, bytes))
 
 async def fireLost(trace_id, bundle, bytes):
-    logger.debug("send bytes:" + bytes.decode(), extra={"TRACE_ID": trace_id})
+    logger.debug("<" + str(bundle[0]) + "/" + str(bundle[1]) + ">:" + bytes.decode(), extra={"TRACE_ID": trace_id})
     s = socket.socket()
     s.connect(bundle)
     print(bytes)
