@@ -5,6 +5,25 @@ import os
 import socket
 import asyncio
 import json
+import logging
+import uuid
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+handler = logging.FileHandler("./app/logs/log.txt")
+format = {
+    'trace_id': '%(TRACE_ID)s',
+    'content':  {
+        'time': '%(asctime)s',
+        'pathname': '%(pathname)s',
+        'line': '%(lineno)d',
+        'logLevel': '%(levelname)s',
+        'message': '%(message)s'
+    }
+}
+formatter = logging.Formatter(json.dumps(format))
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 async def main(bundle, bytes):
     asyncio.ensure_future(fireLost(bundle, bytes))
@@ -34,6 +53,7 @@ class HandleRequests(BaseHTTPRequestHandler):
     def do_POST(self):
         '''Reads post request body'''
         self._set_headers()
+        x_trace_id = str(uuid.uuid4())
         content_len = int(self.headers.get_all('content-length')[0])
         post_body = self.rfile.read(content_len)
         now = datetime.now()
@@ -44,13 +64,14 @@ class HandleRequests(BaseHTTPRequestHandler):
         content = json.dumps(data["content"])
         a = "received post request to {}:<br>{}".format(target, content)
         print("["+now.strftime("%m/%d/%Y, %H:%M:%S")+"]: " + a)
+        logger.debug(a, extra={"TRACE_ID": x_trace_id})
         self.delegate_bytes(target, content.encode())
         self.wfile.write(b'')
 
     def do_PUT(self):
         self.do_POST()
 
-    def get_target(self, data):
+    def get_target(self, data, default):
         if "target" in data and data["target"] != "" and data["target"].isnumeric():
             return int(data["target"])
         return 0
