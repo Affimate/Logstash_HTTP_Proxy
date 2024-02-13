@@ -8,6 +8,9 @@ import json
 import logging
 import uuid
 
+if not os.path.isdir("./app/logs"):
+    os.makedirs("./app/logs")
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 handler = logging.FileHandler("./app/logs/log.txt")
@@ -71,7 +74,7 @@ class HandleRequests(BaseHTTPRequestHandler):
     def do_PUT(self):
         self.do_POST()
 
-    def get_target(self, data, default):
+    def get_target(self, data):
         if "target" in data and data["target"] != "" and data["target"].isnumeric():
             return int(data["target"])
         return 0
