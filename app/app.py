@@ -28,10 +28,11 @@ formatter = logging.Formatter(json.dumps(format))
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-async def main(bundle, bytes):
-    asyncio.ensure_future(fireLost(bundle, bytes))
+async def main(trace_id, bundle, bytes):
+    asyncio.ensure_future(fireLost(trace_id, bundle, bytes))
 
-async def fireLost(bundle, bytes):
+async def fireLost(trace_id, bundle, bytes):
+    logger.debug("send bytes:" + bytes.decode(), extra={"TRACE_ID": trace_id})
     s = socket.socket()
     s.connect(bundle)
     print(bytes)
@@ -68,7 +69,7 @@ class HandleRequests(BaseHTTPRequestHandler):
         a = "received post request to {}:<br>{}".format(target, content)
         print("["+now.strftime("%m/%d/%Y, %H:%M:%S")+"]: " + a)
         logger.debug(a, extra={"TRACE_ID": x_trace_id})
-        self.delegate_bytes(target, content.encode())
+        self.delegate_bytes(x_trace_id, target, content.encode())
         self.wfile.write(b'')
 
     def do_PUT(self):
@@ -79,9 +80,9 @@ class HandleRequests(BaseHTTPRequestHandler):
             return int(data["target"])
         return 0
 
-    def delegate_bytes(self, target, bytes):
+    def delegate_bytes(self, trace_id, target, bytes):
         resolve_port = target if target != 0 else self.bundle_target[1]
-        asyncio.run(main((self.bundle_target[0], resolve_port), bytes))
+        asyncio.run(main(trace_id, (self.bundle_target[0], resolve_port), bytes))
 
 if __name__ == "__main__":
     try:
